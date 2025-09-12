@@ -182,6 +182,21 @@ ArrayAttr noTransformsArray(Builder &b, size_t n) {
 //===---------------------------------------------------------
 // TransformAttr
 //===---------------------------------------------------------
+template <typename T>
+static ParseResult
+parseAndGather(mlir::AsmParser &parser, AsmParser::Delimiter delim,
+               SmallVectorImpl<T> &ret,
+               llvm::function_ref<ParseResult(T &)> getElement) {
+  return parser.parseCommaSeparatedList(delim, [&]() -> ParseResult {
+    T out;
+    ParseResult res = getElement(out);
+    if (res.succeeded()) {
+      ret.push_back(out);
+    }
+    return res;
+  });
+}
+
 mlir::Attribute TransformAttr::parse(mlir::AsmParser &parser, mlir::Type type) {
   llvm::SMLoc startLoc = parser.getCurrentLocation();
   if (parser.parseLess()) {
